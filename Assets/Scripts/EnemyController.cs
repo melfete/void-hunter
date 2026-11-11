@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class EnemyController : MonoBehaviour
 {
@@ -119,22 +120,20 @@ public class EnemyController : MonoBehaviour
             }
         }
 
-        if (patrolPoints == null || patrolPoints.Length == 0)
+        // Leere (nicht zugewiesene) Eintraege im Inspector entfernen.
+        patrolPoints = RemoveMissingPatrolPoints(patrolPoints);
+
+        if (patrolPoints.Length == 0)
         {
-            Debug.LogWarning("EnemyController: No patrol points assigned. Enemy will only chase or remain in its 'running' state.");
-            patrolPoints = new Transform[1];
-            GameObject defaultPatrolPoint = new GameObject("DefaultPatrolPoint_" + gameObject.name);
-            defaultPatrolPoint.transform.position = transform.position;
-            defaultPatrolPoint.transform.parent = transform.parent;
-            patrolPoints[0] = defaultPatrolPoint.transform;
-            _currentState = EnemyState.Patrol;
+            Debug.LogWarning("EnemyController: Keine gueltigen Patrol Points an " + gameObject.name + ". Es wird ein Standard-Wegpunkt an der Startposition angelegt.");
+            patrolPoints = new[] { CreateDefaultPatrolPoint() };
         }
         else
         {
             transform.position = patrolPoints[_currentPatrolPointIndex].position;
-            _currentState = EnemyState.Patrol;
         }
-        
+        _currentState = EnemyState.Patrol;
+
         originalPosition = transform.position;
         nextAttackTime = Time.time;
 
@@ -247,7 +246,8 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        if (patrolPoints == null || patrolPoints.Length == 0)
+        // Wegpunkte koennen auch zur Laufzeit zerstoert werden.
+        if (!EnsureValidPatrolPoints())
         {
             _rb.linearVelocity = Vector2.zero;
             return;
@@ -405,7 +405,7 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
-        Vector2 returnTarget = patrolPoints.Length > 0 ? (Vector2)patrolPoints[0].position : (Vector2)originalPosition;
+        Vector2 returnTarget = EnsureValidPatrolPoints() ? (Vector2)patrolPoints[0].position : (Vector2)originalPosition;
         Vector2 directionToReturn = (returnTarget - (Vector2)transform.position).normalized;
         
         if (isFloatingEnemy)
@@ -453,6 +453,50 @@ public class EnemyController : MonoBehaviour
         }
         
         Destroy(gameObject, 2f); 
+    }
+
+    // Gibt ein Array ohne leere/zerstoerte Eintraege zurueck (nie null).
+    // Der Unity-Vergleich "!= null" erkennt auch zerstoerte Objekte.
+    private static Transform[] RemoveMissingPatrolPoints(Transform[] points)
+    {
+        if (points == null) return new Transform[0];
+
+        var valid = new List<Transform>(points.Length);
+        foreach (Transform point in points)
+        {
+            if (point != null) valid.Add(point);
+        }
+        return valid.ToArray();
+    }
+
+    private Transform CreateDefaultPatrolPoint()
+    {
+        GameObject defaultPatrolPoint = new GameObject("DefaultPatrolPoint_" + gameObject.name);
+        defaultPatrolPoint.transform.position = transform.position;
+        defaultPatrolPoint.transform.parent = transform.parent;
+        return defaultPatrolPoint.transform;
+    }
+
+    // Entfernt zur Laufzeit zerstoerte Wegpunkte und haelt den Index gueltig.
+    // Liefert false, wenn kein Wegpunkt mehr uebrig ist.
+    private bool EnsureValidPatrolPoints()
+    {
+        if (patrolPoints == null || System.Array.Exists(patrolPoints, p => p == null))
+        {
+            patrolPoints = RemoveMissingPatrolPoints(patrolPoints);
+        }
+
+        if (patrolPoints.Length == 0)
+        {
+            _currentPatrolPointIndex = 0;
+            return false;
+        }
+
+        if (_currentPatrolPointIndex >= patrolPoints.Length)
+        {
+            _currentPatrolPointIndex = 0;
+        }
+        return true;
     }
 
     private AudioSource CreateLoopSource(AudioSource template)

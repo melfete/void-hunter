@@ -70,3 +70,9 @@ Thumbs.db
 
 # Repomix-Ausgabe (wird bei Bedarf neu erzeugt)
 repomix-*.xml
+
+# Screenshots aus dem Spiel (F12, ScreenshotTaker.cs)
+/[Ss]creenshots/
+
+# Von der IDE erzeugte Solution-Datei (neues .slnx-Format)
+*.slnx
