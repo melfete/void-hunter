@@ -76,3 +76,6 @@ repomix-*.xml
 
 # Von der IDE erzeugte Solution-Datei (neues .slnx-Format)
 *.slnx
+
+# Persoenliche Dateien, die nicht zum Spiel gehoeren
+/Claude outputs/
