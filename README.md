@@ -75,11 +75,6 @@ All gameplay code is in [`Assets/Scripts`](Assets/Scripts):
 
 ## Credits
 
-<!-- TODO: Quellen und Lizenzen der Assets eintragen, z. B.:
-- Player sprites: "<Pack name>" by <Artist> (<Link>), <License>
-- Enemy sprites: ...
-- Backgrounds / Tileset: ...
-- Sound effects and music: ...
--->
+Graphics and sound effects are taken from free asset packs. All rights belong to their respective creators.
 
 Game design, programming and level design by **Saltuk Kalender**.
