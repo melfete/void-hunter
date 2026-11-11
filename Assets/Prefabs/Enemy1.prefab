@@ -142,10 +142,10 @@ MonoBehaviour:
   floatAmplitude: 7
   floatSpeed: 1.2
   playerTransform: {fileID: 0}
-  chaseRange: 5
+  chaseRange: 7
   attackRange: 1.5
   attackCooldown: 2
-  returnToPatrolRange: 8
+  returnToPatrolRange: 12
   enemyGroundCheck: {fileID: 0}
   enemyGroundCheckRadius: 0.2
   groundLayer:
