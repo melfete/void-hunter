@@ -1,0 +1,72 @@
+# --- Unity: generierte Ordner (werden von Unity neu erzeugt) ---
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+# Eigener Build-Ordner dieses Projekts
+/Game Build/
+
+# Asset Store Tools
+/[Aa]ssets/AssetStoreTools*
+
+# Autogenerierte Jetbrains Rider Plugin
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# --- IDEs ---
+.vs/
+.vscode/
+.idea/
+.gradle/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+# Unity-Metadaten von Debug-Symbolen
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Absturzberichte
+sysinfo.txt
+
+# Builds
+*.apk
+*.aab
+*.unitypackage
+*.app
+
+# Crashlytics
+crashlytics-build.properties
+
+# Addressables
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+
+# Temporaere Streaming-Assets
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# --- Sonstiges ---
+.DS_Store
+Thumbs.db
+
+# Repomix-Ausgabe (wird bei Bedarf neu erzeugt)
+repomix-*.xml
