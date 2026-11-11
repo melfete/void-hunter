@@ -261,7 +261,7 @@ MonoBehaviour:
   playerTransform: {fileID: 0}
   chaseRange: 5
   attackRange: 15
-  attackCooldown: 1
+  attackCooldown: 2.5
   returnToPatrolRange: 8
   enemyGroundCheck: {fileID: 5235448108539208064}
   enemyGroundCheckRadius: 0.2

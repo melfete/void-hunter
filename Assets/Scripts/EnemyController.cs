@@ -230,6 +230,17 @@ public class EnemyController : MonoBehaviour
     }
 
 
+    private void FacePlayer()
+    {
+        if (playerTransform == null) return;
+
+        float dx = playerTransform.position.x - transform.position.x;
+        if (Mathf.Abs(dx) > 0.05f) // direkt darueber/darunter: Richtung beibehalten
+        {
+            UpdateEnemyFacingDirection(dx > 0f);
+        }
+    }
+
     bool IsPlatformAhead()
     {
         float lookDirectionX = transform.localScale.x > 0 ? -1 : 1;
@@ -302,13 +313,12 @@ public class EnemyController : MonoBehaviour
         }
 
         Vector2 directionToPlayer = (playerTransform.position - transform.position).normalized;
-        
+
         if (isFloatingEnemy)
         {
+            // Direkt auf den Spieler zufliegen. Frueher war die Hoehe an das Auf-und-ab-Schweben
+            // gebunden - fliegende Gegner konnten dem Spieler so nicht folgen.
             _rb.linearVelocity = directionToPlayer * moveSpeed;
-
-            float newY = originalPosition.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
-            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, (newY - transform.position.y) * floatSpeed);
         }
         else
         {
@@ -323,8 +333,9 @@ public class EnemyController : MonoBehaviour
 
     void HandleAttackState(float distanceToPlayer)
     {
-        _rb.linearVelocity = Vector2.zero;
-        isAttackingPlayer = true;
+        // Nur waagerecht anhalten. Die y-Geschwindigkeit bleibt, sonst wird das Fallen in jedem
+        // Physik-Schritt geloescht und der Gegner sinkt in Zeitlupe (z.B. nach Rueckstoss nach oben).
+        _rb.linearVelocity = isFloatingEnemy ? Vector2.zero : new Vector2(0f, _rb.linearVelocity.y);
         StopEnemyMovementSounds();
 
         if (playerTransform == null)
@@ -340,10 +351,17 @@ public class EnemyController : MonoBehaviour
             isAttackingPlayer = false;
             return;
         }
-        
+
+        // Im Stand ergibt sich die Blickrichtung nicht aus der Bewegung - also zum Spieler drehen.
+        FacePlayer();
+
+        // Angriff nur starten, wenn der Cooldown abgelaufen ist. Frueher wurde isAttackingPlayer in jedem
+        // Physik-Schritt gesetzt - die Angriffs-Animation lief dann endlos und der Wizard schoss bei jedem
+        // Durchlauf (Animation-Event), unabhaengig vom Cooldown. Dazwischen wartet der Gegner.
         if (Time.time >= nextAttackTime)
         {
-            animator.SetBool(AnimIsAttacking, true); 
+            isAttackingPlayer = true;
+            animator.SetBool(AnimIsAttacking, true);
             if (audioSource != null && attackSound != null)
             {
                 audioSource.PlayOneShot(attackSound);
@@ -368,6 +386,9 @@ public class EnemyController : MonoBehaviour
             return;
         }
 
+        // Der Schuss kommt per Animation-Event spaeter als der Angriffsstart - der Spieler
+        // kann inzwischen vorbeigelaufen sein. Deshalb direkt vor dem Schuss erneut ausrichten.
+        FacePlayer();
         Vector2 fireDirection = enemyFacingRight ? Vector2.right : Vector2.left;
 
         GameObject fireballGO = Instantiate(enemyFireballPrefab, enemyFirePoint.position, Quaternion.identity);
@@ -412,10 +433,8 @@ public class EnemyController : MonoBehaviour
         
         if (isFloatingEnemy)
         {
+            // Direkt zurueckfliegen - mit dem starken Schweben wuerde der Wegpunkt evtl. nie erreicht.
             _rb.linearVelocity = directionToReturn * moveSpeed;
-
-            float newY = originalPosition.y + Mathf.Sin(Time.time * floatSpeed) * floatAmplitude;
-            _rb.linearVelocity = new Vector2(_rb.linearVelocity.x, (newY - transform.position.y) * floatSpeed);
         }
         else
         {
