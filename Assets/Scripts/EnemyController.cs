@@ -24,6 +24,8 @@ public class EnemyController : MonoBehaviour
     public float attackAnimationDuration = 0.5f;
     public float returnToPatrolRange = 8f;
     public float deathYValue = 380.99f;
+    public float deathFadeDelay = 0.7f;     // etwa die Laenge der Todes-Animation
+    public float deathFadeDuration = 1.3f;
 
 
     public Transform enemyGroundCheck;
@@ -438,6 +440,10 @@ public class EnemyController : MonoBehaviour
 
         IsDead = true;
         _currentState = EnemyState.Dead;
+        // Laufenden Angriff beenden, sonst kann "Attack" die Todes-Animation unterbrechen.
+        StopAllCoroutines();
+        isAttackingPlayer = false;
+        animator.SetBool(AnimIsAttacking, false);
         animator.SetBool(AnimIsDead, true);
         StopEnemyMovementSounds();
 
@@ -446,13 +452,42 @@ public class EnemyController : MonoBehaviour
             audioSource.PlayOneShot(deathSound);
         }
         
-        _rb.linearVelocity = Vector2.zero;
+        // Toter Gegner darf nichts mehr blockieren: Kollider aus und raus aus der Physik.
+        // Sonst steht er waehrend Todes-Animation und Ausblenden als unbewegliche Wand im Weg.
+        foreach (Collider2D col in GetComponentsInChildren<Collider2D>())
+        {
+            col.enabled = false;
+        }
         if (_rb != null)
         {
+            _rb.linearVelocity = Vector2.zero;
             _rb.bodyType = RigidbodyType2D.Kinematic;
+            _rb.simulated = false;
         }
         
-        Destroy(gameObject, 2f); 
+        StartCoroutine(FadeOutAfterDeath());
+        Destroy(gameObject, deathFadeDelay + deathFadeDuration);
+    }
+
+    // Nach der Todes-Animation langsam ausblenden statt ploetzlich zu verschwinden.
+    private IEnumerator FadeOutAfterDeath()
+    {
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr == null) sr = GetComponentInChildren<SpriteRenderer>();
+        if (sr == null) yield break;
+
+        yield return new WaitForSeconds(deathFadeDelay);
+
+        Color start = sr.color;
+        float t = 0f;
+        while (t < deathFadeDuration)
+        {
+            t += Time.deltaTime;
+            Color c = start;
+            c.a = Mathf.Lerp(start.a, 0f, t / deathFadeDuration);
+            sr.color = c;
+            yield return null;
+        }
     }
 
     // Gibt ein Array ohne leere/zerstoerte Eintraege zurueck (nie null).
