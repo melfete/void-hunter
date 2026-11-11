@@ -14,9 +14,12 @@ public class PlayerHealth : MonoBehaviour
 
     public float deathYValue = -10f;
 
+    private static readonly int AnimIsHurt = Animator.StringToHash("IsHurt");
+
     private Rigidbody2D rb;
     private PlayerController playerController;
     private Animator animator;
+    private Coroutine knockbackRoutine;
 
     public AudioClip hitSound;
     private AudioSource audioSource;
@@ -89,20 +92,37 @@ public class PlayerHealth : MonoBehaviour
             return;
         }
 
+        // Treffer-Animation laeuft genau so lange wie der Rueckstoss.
+        if (animator != null)
+        {
+            animator.SetBool(AnimIsHurt, true);
+        }
+
         if (rb != null && playerController != null)
         {
             playerController.enabled = false;
             rb.linearVelocity = Vector2.zero;
             Vector2 knockbackDirection = (transform.position - attackerTransform.position).normalized;
             rb.AddForce(knockbackDirection * knockbackForce, ForceMode2D.Impulse);
-            StartCoroutine(ActivatePlayerControllerAfterDelay());
         }
+
+        // Bei einem zweiten Treffer waehrend des Rueckstosses die Zeit neu starten.
+        if (knockbackRoutine != null)
+        {
+            StopCoroutine(knockbackRoutine);
+        }
+        knockbackRoutine = StartCoroutine(ActivatePlayerControllerAfterDelay());
     }
 
     private System.Collections.IEnumerator ActivatePlayerControllerAfterDelay()
     {
         yield return new WaitForSeconds(knockbackDuration);
-        if (playerController != null && currentHealth > 0)
+        knockbackRoutine = null;
+        if (animator != null)
+        {
+            animator.SetBool(AnimIsHurt, false);
+        }
+        if (playerController != null && rb != null && currentHealth > 0)
         {
             playerController.enabled = true;
             rb.linearVelocity = Vector2.zero;
@@ -120,6 +140,7 @@ public class PlayerHealth : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool("IsDead", false);
+            animator.SetBool(AnimIsHurt, false);
         }
         if (playerController != null)
         {
@@ -155,9 +176,16 @@ public class PlayerHealth : MonoBehaviour
             healthBarFillImage.fillAmount = 0f;
         }
 
+        if (knockbackRoutine != null)
+        {
+            StopCoroutine(knockbackRoutine);
+            knockbackRoutine = null;
+        }
+
         if (animator != null)
         {
             animator.SetBool("IsDead", true);
+            animator.SetBool(AnimIsHurt, false);
         }
         else
         {
