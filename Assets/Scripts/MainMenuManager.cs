@@ -1,7 +1,5 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using TMPro;
 
 public class MainMenuManager : MonoBehaviour
 {
@@ -29,7 +27,7 @@ public class MainMenuManager : MonoBehaviour
             quitButton.onClick.AddListener(QuitGame);
         if (backButtonSettings != null)
             backButtonSettings.onClick.AddListener(CloseSettings);
-        
+
         if (volumeSlider != null)
         {
             volumeSlider.onValueChanged.AddListener(SetVolume);
@@ -41,21 +39,29 @@ public class MainMenuManager : MonoBehaviour
         AudioListener.pause = false;
     }
 
-    public void PlayGame()
+    void Update()
     {
-        SceneManager.LoadScene(gameSceneName);
+        // Esc fuehrt aus den Einstellungen zurueck.
+        if (Input.GetKeyDown(KeyCode.Escape) && settingsPanel != null && settingsPanel.activeSelf)
+        {
+            CloseSettings();
+        }
     }
 
+    public void PlayGame()
+    {
+        SceneFader.LoadScene(gameSceneName);
+    }
+
+    // Weicher Wechsel: erst das aktuelle Panel ausblenden, dann das neue einblenden.
     public void OpenSettings()
     {
-        mainPanel.SetActive(false);
-        settingsPanel.SetActive(true);
+        UIPanelFade.Hide(mainPanel, () => UIPanelFade.Show(settingsPanel));
     }
 
     public void CloseSettings()
     {
-        settingsPanel.SetActive(false);
-        mainPanel.SetActive(true);
+        UIPanelFade.Hide(settingsPanel, () => UIPanelFade.Show(mainPanel));
     }
 
     public void QuitGame()
