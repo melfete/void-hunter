@@ -18,6 +18,14 @@ A 2D action platformer made with **Unity 6** and **C#**. Fight your way through 
 - **Portal finale:** the exit portal appears once the key enemies are defeated, followed by a camera zoom and fade-out ending sequence
 - Main menu, pause menu with volume control, game over screen with restart
 
+## Screenshots
+
+| | |
+|---|---|
+| ![Main menu](Docs/menu.png) | ![Combat](Docs/combat.png) |
+| ![Enemies](Docs/enemies.png) | ![Wizard](Docs/wizard.png) |
+| ![Portal](Docs/portal.png) | ![Ending](Docs/ending.png) |
+
 ## Controls
 
 | Action      | Keys                       |
