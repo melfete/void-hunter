@@ -162,7 +162,8 @@ public class EnemyController : MonoBehaviour
     {
         if (IsDead)
         {
-            _rb.linearVelocity = Vector2.zero;
+            // Waagerecht stillhalten, aber fallen lassen (sonst wieder Zeitlupe).
+            _rb.linearVelocity = new Vector2(0f, _rb.linearVelocity.y);
             animator.SetBool(AnimIsDead, true);
             StopEnemyMovementSounds();
             return;
@@ -471,17 +472,18 @@ public class EnemyController : MonoBehaviour
             audioSource.PlayOneShot(deathSound);
         }
         
-        // Toter Gegner darf nichts mehr blockieren: Kollider aus und raus aus der Physik.
-        // Sonst steht er waehrend Todes-Animation und Ausblenden als unbewegliche Wand im Weg.
+        // Toter Gegner faellt weiter, darf aber nichts mehr blockieren: Er kollidiert nur noch mit
+        // Boden, Plattformen und Waenden. Spieler, Projektile und andere Gegner gehen durch ihn hindurch.
         foreach (Collider2D col in GetComponentsInChildren<Collider2D>())
         {
-            col.enabled = false;
+            if (col.isTrigger) col.enabled = false; // Trigger loesen sonst noch Treffer aus
         }
         if (_rb != null)
         {
-            _rb.linearVelocity = Vector2.zero;
-            _rb.bodyType = RigidbodyType2D.Kinematic;
-            _rb.simulated = false;
+            int keepLayers = groundLayer | platformLayer | LayerMask.GetMask("Wall");
+            _rb.excludeLayers = ~keepLayers;
+            _rb.gravityScale = Mathf.Max(_rb.gravityScale, 1f); // auch fliegende Gegner fallen
+            _rb.linearVelocity = new Vector2(0f, Mathf.Min(_rb.linearVelocity.y, 0f));
         }
         
         StartCoroutine(FadeOutAfterDeath());
