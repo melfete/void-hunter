@@ -82,4 +82,4 @@ All gameplay code is in [`Assets/Scripts`](Assets/Scripts):
 - Sound effects and music: ...
 -->
 
-Game design, programming and level design by **melfete**.
+Game design, programming and level design by **Saltuk Kalender**.
