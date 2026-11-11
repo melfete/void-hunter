@@ -4,6 +4,17 @@ using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour
 {
+    // Animator-Parameter einmal als Hash berechnen (schneller als Strings in jedem Frame).
+    private static readonly int AnimDashLeft = Animator.StringToHash("DashLeft");
+    private static readonly int AnimDashRight = Animator.StringToHash("DashRight");
+    private static readonly int AnimFacingRight = Animator.StringToHash("FacingRight");
+    private static readonly int AnimHealingLeft = Animator.StringToHash("HealingLeft");
+    private static readonly int AnimHealingRight = Animator.StringToHash("HealingRight");
+    private static readonly int AnimIsAttacking = Animator.StringToHash("IsAttacking");
+    private static readonly int AnimIsJumping = Animator.StringToHash("IsJumping");
+    private static readonly int AnimIsMovingUp = Animator.StringToHash("IsMovingUp");
+    private static readonly int AnimIsRunning = Animator.StringToHash("IsRunning");
+
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
     public Transform groundCheck;
@@ -54,6 +65,8 @@ public class PlayerController : MonoBehaviour
     private bool isAttacking;
     private bool isMovingUp; 
     private bool isInPortalTrigger;
+    private float moveInput;
+    private float verticalInput;
 
     private float originalAttackPointLocalX;
     private float originalFirePointLocalX;
@@ -150,7 +163,7 @@ public class PlayerController : MonoBehaviour
             enabled = false; 
         }
 
-        animator.SetBool("FacingRight", facingRight);
+        animator.SetBool(AnimFacingRight, facingRight);
         UpdateChildLocalPositions();
     }
 
@@ -159,41 +172,33 @@ public class PlayerController : MonoBehaviour
         // Im Pausemenue keine Eingaben verarbeiten (Input funktioniert auch bei timeScale 0).
         if (PauseMenu.isPaused) return;
 
-        isGrounded =Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
-        
-        float moveInput = Input.GetAxis("Horizontal"); 
-        float verticalInput = Input.GetAxis("Vertical");
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+
+        // Eingaben werden hier gelesen und in FixedUpdate fuer die Physik verwendet.
+        moveInput = Input.GetAxis("Horizontal");
+        verticalInput = Input.GetAxis("Vertical");
 
         bool oldFacingRight = facingRight;
         if (!isDashing && !isAttacking)
         {
-            if (moveInput > 0 && !facingRight) 
+            if (moveInput > 0 && !facingRight)
             {
                 facingRight = true;
             }
-            else if (moveInput < 0 && facingRight) 
+            else if (moveInput < 0 && facingRight)
             {
                 facingRight = false;
             }
         }
-        
+
         if (oldFacingRight != facingRight)
         {
             UpdateChildLocalPositions();
         }
-        animator.SetBool("FacingRight", facingRight);
+        animator.SetBool(AnimFacingRight, facingRight);
 
         bool isTouchingWall = Physics2D.OverlapCircle(wallCheck.position, 0.2f, wallLayer);
-
-        if (isTouchingWall && !isGrounded && moveInput != 0 && !isDashing && !isAttacking) 
-        {
-            isWallSliding = true;
-            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Clamp(rb.linearVelocity.y, -wallSlidingSpeed, float.MaxValue));
-        }
-        else
-        {
-            isWallSliding = false;
-        }
+        isWallSliding = isTouchingWall && !isGrounded && moveInput != 0 && !isDashing && !isAttacking;
 
         if (isWallSliding)
         {
@@ -204,6 +209,7 @@ public class PlayerController : MonoBehaviour
             wallJumpTimer -= Time.deltaTime;
         }
 
+        // Einmalige Impulse (Spruenge) bleiben in Update, damit kein Tastendruck verloren geht.
         if (Input.GetButtonDown("Jump") && wallJumpTimer > 0 && !isGrounded && !isDashing && !isAttacking)
         {
             isWallJumping = true;
@@ -211,63 +217,30 @@ public class PlayerController : MonoBehaviour
 
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, wallJumpForceY);
 
-            float wallJumpDirX = facingRight ? -1 : 1; 
+            float wallJumpDirX = facingRight ? -1 : 1;
             rb.AddForce(new Vector2(wallJumpDirX * wallJumpForceX, 0), ForceMode2D.Impulse);
 
             StartCoroutine(DisableHorizontalMovementAfterWallJump());
-            if (audioSource != null && jumpSound != null)
-            {
-                audioSource.PlayOneShot(jumpSound);
-            }
+            PlaySound(jumpSound);
         }
 
-        if (isDashing)
-        {
-            
-        }
-        else if (isWallJumping)
-        {
-            
-        }
-        else if (isAttacking) 
-        {
-            rb.linearVelocity = Vector2.zero;
-        }
-        else
-        {
-            if (isInPortalTrigger && Mathf.Abs(verticalInput) > 0.01f)
-            {
-                rb.linearVelocity = new Vector2(0f, verticalInput * verticalMoveSpeed);
-                isMovingUp = true;
-            }
-            else
-            {
-                rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
-                isMovingUp = false;
-            }
-        }
-
-        animator.SetBool("IsRunning", Mathf.Abs(moveInput) > 0.01f && !isDashing && !isAttacking && !isMovingUp); 
-        animator.SetBool("IsJumping", !isGrounded);
-        animator.SetBool("IsAttacking", isAttacking);
-        animator.SetBool("IsMovingUp", isMovingUp);
+        animator.SetBool(AnimIsRunning, Mathf.Abs(moveInput) > 0.01f && !isDashing && !isAttacking && !isMovingUp);
+        animator.SetBool(AnimIsJumping, !isGrounded);
+        animator.SetBool(AnimIsAttacking, isAttacking);
+        animator.SetBool(AnimIsMovingUp, isMovingUp);
 
         if (!isWallJumping && Input.GetButtonDown("Jump") && isGrounded && !isDashing && !isAttacking)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            animator.SetBool("IsJumping", true); 
-            if (audioSource != null && jumpSound != null)
-            {
-                audioSource.PlayOneShot(jumpSound);
-            }
+            animator.SetBool(AnimIsJumping, true);
+            PlaySound(jumpSound);
         }
 
         if (isGrounded && Mathf.Abs(moveInput) > 0.01f && !isDashing && !isAttacking && !isMovingUp && Time.time >= nextStepTime)
         {
-            if (grassStepSounds != null && grassStepSounds.Count > 0 && audioSource != null)
+            if (grassStepSounds != null && grassStepSounds.Count > 0)
             {
-                AudioClip randomStepSound = grassStepSounds[Random.Range(0, grassStepSounds.Count)];
-                audioSource.PlayOneShot(randomStepSound);
+                PlaySound(grassStepSounds[Random.Range(0, grassStepSounds.Count)]);
                 nextStepTime = Time.time + timeBetweenSteps;
             }
         }
@@ -278,7 +251,7 @@ public class PlayerController : MonoBehaviour
             nextAttackTime = Time.time + attackCooldown;
         }
 
-        if (Time.time >= nextProjectileTime && Input.GetButtonDown("Fire2") && !isDashing && !isAttacking) 
+        if (Time.time >= nextProjectileTime && Input.GetButtonDown("Fire2") && !isDashing && !isAttacking)
         {
             FireProjectile();
             nextProjectileTime = Time.time + projectileCooldown;
@@ -293,10 +266,47 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftShift) && Time.time >= nextDashTime && !isDashing && !isWallSliding && !isAttacking) 
+        if (Input.GetKeyDown(KeyCode.LeftShift) && Time.time >= nextDashTime && !isDashing && !isWallSliding && !isAttacking)
         {
             Dash();
             nextDashTime = Time.time + dashCooldown;
+        }
+    }
+
+    // Laufende Bewegung im Physik-Takt: unabhaengig von der Framerate.
+    void FixedUpdate()
+    {
+        if (isWallSliding)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, Mathf.Max(rb.linearVelocity.y, -wallSlidingSpeed));
+        }
+
+        if (isDashing || isWallJumping)
+        {
+            return; // Geschwindigkeit wurde beim Dash/Wall-Jump einmalig gesetzt.
+        }
+
+        if (isAttacking)
+        {
+            rb.linearVelocity = Vector2.zero;
+        }
+        else if (isInPortalTrigger && Mathf.Abs(verticalInput) > 0.01f)
+        {
+            rb.linearVelocity = new Vector2(0f, verticalInput * verticalMoveSpeed);
+            isMovingUp = true;
+        }
+        else
+        {
+            rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
+            isMovingUp = false;
+        }
+    }
+
+    private void PlaySound(AudioClip clip)
+    {
+        if (audioSource != null && clip != null)
+        {
+            audioSource.PlayOneShot(clip);
         }
     }
 
@@ -327,7 +337,7 @@ public class PlayerController : MonoBehaviour
     void Attack()
     {
         isAttacking = true;
-        animator.SetBool("IsAttacking", true);
+        animator.SetBool(AnimIsAttacking, true);
         StartCoroutine(ResetAttackAnimation());
 
         if (attackPoint == null)
@@ -347,17 +357,14 @@ public class PlayerController : MonoBehaviour
                 enemyHealth.TakeKnockback(transform, playerAttackKnockbackForce);
             }
         }
-        if (audioSource != null && attackSound != null)
-        {
-            audioSource.PlayOneShot(attackSound);
-        }
+        PlaySound(attackSound);
     }
 
     private IEnumerator ResetAttackAnimation()
     {
         yield return new WaitForSeconds(0.3f); 
         isAttacking = false;
-        animator.SetBool("IsAttacking", false);
+        animator.SetBool(AnimIsAttacking, false);
     }
 
     void FireProjectile()
@@ -380,10 +387,7 @@ public class PlayerController : MonoBehaviour
         {
             Debug.LogWarning("ProjektilPrefab hat kein 'Projectile'-Skript!");
         }
-        if (audioSource != null && fireProjectileSound != null)
-        {
-            audioSource.PlayOneShot(fireProjectileSound);
-        }
+        PlaySound(fireProjectileSound);
     }
 
     void Heal()
@@ -393,20 +397,17 @@ public class PlayerController : MonoBehaviour
             isHealing = true;
             if (facingRight)
             {
-                animator.SetBool("HealingRight", true);
-                animator.SetBool("HealingLeft", false);
+                animator.SetBool(AnimHealingRight, true);
+                animator.SetBool(AnimHealingLeft, false);
             }
             else
             {
-                animator.SetBool("HealingLeft", true);
-                animator.SetBool("HealingRight", false);
+                animator.SetBool(AnimHealingLeft, true);
+                animator.SetBool(AnimHealingRight, false);
             }
             
             StartCoroutine(PerformHealing());
-            if (audioSource != null && healSound != null)
-            {
-                audioSource.PlayOneShot(healSound);
-            }
+            PlaySound(healSound);
         }
     }
 
@@ -419,8 +420,8 @@ public class PlayerController : MonoBehaviour
             playerHealth.Heal(healAmount); 
         }
         
-        animator.SetBool("HealingRight", false);
-        animator.SetBool("HealingLeft", false);
+        animator.SetBool(AnimHealingRight, false);
+        animator.SetBool(AnimHealingLeft, false);
         isHealing = false;
     }
 
@@ -437,23 +438,20 @@ public class PlayerController : MonoBehaviour
             if (attackPoint != null) attackPoint.localPosition = new Vector3(Mathf.Abs(originalAttackPointLocalX), attackPoint.localPosition.y, attackPoint.localPosition.z);
             if (firePoint != null) firePoint.localPosition = new Vector3(Mathf.Abs(originalFirePointLocalX), firePoint.localPosition.y, firePoint.localPosition.z);
             if (wallCheck != null) wallCheck.localPosition = new Vector3(Mathf.Abs(originalWallCheckLocalX), wallCheck.localPosition.y, wallCheck.localPosition.z);
-            animator.SetBool("DashRight", true);
-            animator.SetBool("DashLeft", false);
+            animator.SetBool(AnimDashRight, true);
+            animator.SetBool(AnimDashLeft, false);
         }
         else
         {
             if (attackPoint != null) attackPoint.localPosition = new Vector3(-Mathf.Abs(originalAttackPointLocalX), attackPoint.localPosition.y, attackPoint.localPosition.z);
             if (firePoint != null) firePoint.localPosition = new Vector3(-Mathf.Abs(originalFirePointLocalX), firePoint.localPosition.y, firePoint.localPosition.z);
             if (wallCheck != null) wallCheck.localPosition = new Vector3(-Mathf.Abs(originalWallCheckLocalX), wallCheck.localPosition.y, wallCheck.localPosition.z);
-            animator.SetBool("DashLeft", true);
-            animator.SetBool("DashRight", false);
+            animator.SetBool(AnimDashLeft, true);
+            animator.SetBool(AnimDashRight, false);
         }
         rb.linearVelocity = new Vector2(dashDirection * dashSpeed, 0f); 
         StartCoroutine(EndDash());
-        if (audioSource != null && dashSound != null)
-        {
-            audioSource.PlayOneShot(dashSound);
-        }
+        PlaySound(dashSound);
     }
 
     private IEnumerator EndDash()
@@ -463,8 +461,8 @@ public class PlayerController : MonoBehaviour
 
         rb.gravityScale = isInPortalTrigger ? 0f : originalGravityScale;
 
-        animator.SetBool("DashRight", false);
-        animator.SetBool("DashLeft", false);
+        animator.SetBool(AnimDashRight, false);
+        animator.SetBool(AnimDashLeft, false);
         
         UpdateChildLocalPositions(); 
     }

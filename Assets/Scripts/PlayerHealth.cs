@@ -23,7 +23,6 @@ public class PlayerHealth : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("PlayerHealth Start: Initializing...");
         currentHealth = maxHealth;
         rb = GetComponent<Rigidbody2D>();
         playerController = GetComponent<PlayerController>();
@@ -43,7 +42,6 @@ public class PlayerHealth : MonoBehaviour
         if (GameManager.instance != null)
         {
             GameManager.instance.RegisterPlayer(gameObject);
-            Debug.Log("PlayerHealth: Registered player with GameManager.");
         }
         else
         {
@@ -59,7 +57,6 @@ public class PlayerHealth : MonoBehaviour
         {
             animator.SetBool("IsDead", false);
         }
-        Debug.Log("PlayerHealth Start: Finished. Initial Health: " + currentHealth);
     }
 
     void Update()
@@ -75,7 +72,6 @@ public class PlayerHealth : MonoBehaviour
         if (currentHealth <= 0) return;
 
         currentHealth -= damage;
-        Debug.Log(gameObject.name + " hat " + damage + " Schaden genommen. Aktuelle Gesundheit: " + currentHealth);
 
         if (audioSource != null && hitSound != null)
         {
@@ -89,7 +85,6 @@ public class PlayerHealth : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            Debug.Log("PlayerHealth: Current health is 0 or less, calling Die().");
             Die();
             return;
         }
@@ -101,7 +96,6 @@ public class PlayerHealth : MonoBehaviour
             Vector2 knockbackDirection = (transform.position - attackerTransform.position).normalized;
             rb.AddForce(knockbackDirection * knockbackForce, ForceMode2D.Impulse);
             StartCoroutine(ActivatePlayerControllerAfterDelay());
-            Debug.Log("PlayerHealth: Applied knockback and disabled controller.");
         }
     }
 
@@ -112,19 +106,16 @@ public class PlayerHealth : MonoBehaviour
         {
             playerController.enabled = true;
             rb.linearVelocity = Vector2.zero;
-            Debug.Log("PlayerHealth: Controller re-enabled after knockback.");
         }
     }
 
     public void ResetHealth()
     {
-        Debug.Log("PlayerHealth: ResetHealth called.");
         currentHealth = maxHealth;
         if (healthBarFillImage != null)
         {
             healthBarFillImage.fillAmount = (float)currentHealth / maxHealth;
         }
-        Debug.Log(gameObject.name + "s Gesundheit zurückgesetzt auf: " + currentHealth);
 
         if (animator != null)
         {
@@ -153,7 +144,6 @@ public class PlayerHealth : MonoBehaviour
         {
             healthBarFillImage.fillAmount = (float)currentHealth / maxHealth;
         }
-        Debug.Log(gameObject.name + " wurde geheilt um " + amount + ". Aktuelle Gesundheit: " + currentHealth);
     }
     
     void Die()
@@ -168,7 +158,6 @@ public class PlayerHealth : MonoBehaviour
         if (animator != null)
         {
             animator.SetBool("IsDead", true);
-            Debug.Log("PlayerHealth: Animator IsDead set to true.");
         }
         else
         {
@@ -178,7 +167,6 @@ public class PlayerHealth : MonoBehaviour
         if (playerController != null)
         {
             playerController.enabled = false;
-            Debug.Log("PlayerHealth: PlayerController disabled.");
         }
         else
         {
@@ -189,7 +177,6 @@ public class PlayerHealth : MonoBehaviour
         {
             rb.linearVelocity = Vector2.zero;
             rb.bodyType = RigidbodyType2D.Kinematic; 
-            Debug.Log("PlayerHealth: Rigidbody stopped and set to kinematic.");
         }
         else
         {
@@ -199,7 +186,6 @@ public class PlayerHealth : MonoBehaviour
         if (GameManager.instance != null)
         {
             GameManager.instance.PlayerDied();
-            Debug.Log("PlayerHealth: GameManager.PlayerDied() called.");
         }
         else
         {

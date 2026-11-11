@@ -43,38 +43,29 @@ public class MainMenuManager : MonoBehaviour
 
     public void PlayGame()
     {
-        Debug.Log("Spiel starten...");
         SceneManager.LoadScene(gameSceneName);
     }
 
     public void OpenSettings()
     {
-        Debug.Log("Einstellungen öffnen...");
         mainPanel.SetActive(false);
         settingsPanel.SetActive(true);
     }
 
     public void CloseSettings()
     {
-        Debug.Log("Einstellungen schließen...");
         settingsPanel.SetActive(false);
         mainPanel.SetActive(true);
     }
 
     public void QuitGame()
     {
-        Debug.Log("Spiel beenden...");
-        Application.Quit();
-
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #endif
+        GameUtils.QuitGame();
     }
 
     public void SetVolume(float volume)
     {
         AudioListener.volume = volume;
-        Debug.Log("Lautstärke gesetzt auf: " + volume);
         PlayerPrefs.SetFloat("MasterVolume", volume);
         PlayerPrefs.Save();
     }

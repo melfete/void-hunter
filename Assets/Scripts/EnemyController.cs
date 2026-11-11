@@ -3,6 +3,9 @@ using System.Collections;
 
 public class EnemyController : MonoBehaviour
 {
+    private static readonly int AnimIsDead = Animator.StringToHash("IsDead");
+    private static readonly int AnimIsAttacking = Animator.StringToHash("IsAttacking");
+
     public float moveSpeed = 2f;
     public Transform[] patrolPoints;
     public float stoppingDistance = 0.5f;
@@ -49,14 +52,13 @@ public class EnemyController : MonoBehaviour
     private bool isEnemyGrounded;
     private Vector3 originalPosition;
 
-    private AudioSource audioSource;
+    private AudioSource audioSource;      // Einmal-Sounds (Angriff, Tod, Schuss, Treffer)
+    private AudioSource loopSource;       // Lauf-/Schwebe-Schleife, separat damit Stop() keine Einmal-Sounds abschneidet
     public AudioClip runSound;
     public AudioClip floatLoopSound;
     public AudioClip attackSound;
     public AudioClip deathSound;
     public AudioClip shootProjectileSound;
-    private bool isRunSoundPlaying;
-    private bool isFloatSoundPlaying;
 
     private bool enemyFacingRight;
 
@@ -86,6 +88,10 @@ public class EnemyController : MonoBehaviour
         if (audioSource == null)
         {
             Debug.LogWarning("EnemyController: AudioSource-Komponente fehlt am Gegner " + gameObject.name + "! Sounds werden nicht abgespielt.");
+        }
+        else
+        {
+            loopSource = CreateLoopSource(audioSource);
         }
         if (enemyHealth == null)
         {
@@ -150,12 +156,13 @@ public class EnemyController : MonoBehaviour
         UpdateEnemyFacingDirection(enemyFacingRight); 
     }
 
-    void Update()
+    // Gesamte KI im Physik-Takt, da sie in jedem Schritt Geschwindigkeiten setzt.
+    void FixedUpdate()
     {
         if (IsDead)
         {
             _rb.linearVelocity = Vector2.zero;
-            animator.SetBool("IsDead", true);
+            animator.SetBool(AnimIsDead, true);
             StopEnemyMovementSounds();
             return;
         }
@@ -170,7 +177,7 @@ public class EnemyController : MonoBehaviour
           
         }
 
-        animator.SetBool("IsAttacking", isAttackingPlayer);
+        animator.SetBool(AnimIsAttacking, isAttackingPlayer);
 
         if (_rb.linearVelocity.x > 0.01f && !enemyFacingRight)
         {
@@ -334,7 +341,7 @@ public class EnemyController : MonoBehaviour
         
         if (Time.time >= nextAttackTime)
         {
-            animator.SetBool("IsAttacking", true); 
+            animator.SetBool(AnimIsAttacking, true); 
             if (audioSource != null && attackSound != null)
             {
                 audioSource.PlayOneShot(attackSound);
@@ -348,7 +355,7 @@ public class EnemyController : MonoBehaviour
     {
         yield return new WaitForSeconds(attackAnimationDuration); 
         isAttackingPlayer = false;
-        animator.SetBool("IsAttacking", false);
+        animator.SetBool(AnimIsAttacking, false);
     }
 
     public void ShootEnemyFireball()
@@ -431,7 +438,7 @@ public class EnemyController : MonoBehaviour
 
         IsDead = true;
         _currentState = EnemyState.Dead;
-        animator.SetBool("IsDead", true);
+        animator.SetBool(AnimIsDead, true);
         StopEnemyMovementSounds();
 
         if (audioSource != null && deathSound != null)
@@ -448,62 +455,57 @@ public class EnemyController : MonoBehaviour
         Destroy(gameObject, 2f); 
     }
 
+    private AudioSource CreateLoopSource(AudioSource template)
+    {
+        AudioSource source = gameObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.loop = true;
+        source.outputAudioMixerGroup = template.outputAudioMixerGroup;
+        source.volume = template.volume;
+        source.pitch = template.pitch;
+        source.spatialBlend = template.spatialBlend;
+        source.rolloffMode = template.rolloffMode;
+        source.minDistance = template.minDistance;
+        source.maxDistance = template.maxDistance;
+        source.priority = template.priority;
+        return source;
+    }
+
     void UpdateMovementSounds()
     {
-        if (audioSource == null || IsDead || isAttackingPlayer) return;
+        if (loopSource == null || IsDead || isAttackingPlayer) return;
 
         bool isMoving = _rb.linearVelocity.magnitude > 0.01f;
+        AudioClip wantedClip = null;
 
         if (isFloatingEnemy)
         {
-            if (isMoving && !isFloatSoundPlaying)
-            {
-                if (floatLoopSound != null)
-                {
-                    audioSource.clip = floatLoopSound;
-                    audioSource.loop = true;
-                    audioSource.Play();
-                    isFloatSoundPlaying = true;
-                    isRunSoundPlaying = false;
-                }
-            }
-            else if (!isMoving && isFloatSoundPlaying)
-            {
-                audioSource.Stop();
-                isFloatSoundPlaying = false;
-            }
+            if (isMoving) wantedClip = floatLoopSound;
         }
-        else
+        else if (isEnemyGrounded && isMoving)
         {
-            if (isEnemyGrounded && isMoving && !isRunSoundPlaying)
-            {
-                if (runSound != null)
-                {
-                    audioSource.clip = runSound;
-                    audioSource.loop = true;
-                    audioSource.Play();
-                    isRunSoundPlaying = true;
-                    isFloatSoundPlaying = false;
-                }
-            }
-            else if ((!isEnemyGrounded || !isMoving) && isRunSoundPlaying)
-            {
-                audioSource.Stop();
-                isRunSoundPlaying = false;
-            }
+            wantedClip = runSound;
+        }
+
+        if (wantedClip == null)
+        {
+            StopEnemyMovementSounds();
+        }
+        else if (loopSource.clip != wantedClip || !loopSource.isPlaying)
+        {
+            loopSource.clip = wantedClip;
+            loopSource.Play();
         }
     }
 
+    // Stoppt nur die Bewegungs-Schleife, nie die Einmal-Sounds.
     void StopEnemyMovementSounds()
     {
-        if (audioSource != null && audioSource.isPlaying)
+        if (loopSource != null && loopSource.isPlaying)
         {
-            audioSource.Stop();
-            isRunSoundPlaying = false;
-            isFloatSoundPlaying = false;
+            loopSource.Stop();
         }
     }
-
 
     void OnTriggerEnter2D(Collider2D other)
     {

@@ -12,7 +12,6 @@ public class PortalManager : MonoBehaviour
 
     private Animator portalAnimator;
     private PlayerController playerController;
-    private bool portalIsActive = false;
     private bool effectTriggered = false;
 
     void Start()
@@ -55,42 +54,34 @@ public class PortalManager : MonoBehaviour
 
     void ActivatePortal(GameObject diedEnemy)
     {
-        Debug.Log("PortalManager: Specific enemy " + diedEnemy.name + " died! Activating portal.");
-        Invoke("DoActivatePortal", portalActivationDelay);
+        StartCoroutine(ActivatePortalAfterDelay());
     }
 
-    void DoActivatePortal()
+    IEnumerator ActivatePortalAfterDelay()
     {
+        yield return new WaitForSeconds(portalActivationDelay);
+
         if (portalSpawnLocation != null)
         {
             portalObject.transform.position = portalSpawnLocation.position;
         }
         
         portalObject.SetActive(true);
-        portalIsActive = true;
 
-        if (portalAnimator != null)
-        {
-            
-        }
-        Debug.Log("PortalManager: Portal activated!");
-        
-        StartCoroutine(StartEndGameEffectAfterDelay());
+        yield return StartEndGameEffectAfterDelay();
     }
 
     IEnumerator StartEndGameEffectAfterDelay()
     {
-        Debug.Log("PortalManager: Warte " + portalEffectStartDelay + " Sekunden für Portal-Animation, bevor Sog-Effekt startet.");
         yield return new WaitForSeconds(portalEffectStartDelay);
 
         if (!effectTriggered && GameEndManager.instance != null)
         {
             effectTriggered = true; 
-            Debug.Log("PortalManager: Verzögerung abgelaufen, starte GameEndManager Effekt.");
             
             GameEndManager.instance.targetSceneName = targetSceneName;
             GameEndManager.instance.portalTransform = portalObject.transform; 
-            GameEndManager.instance.StartEndGameEffect(playerController?.gameObject); 
+            GameEndManager.instance.StartEndGameEffect(playerController != null ? playerController.gameObject : null); 
             
             if (playerController != null) playerController.enabled = false;
             
@@ -102,21 +93,4 @@ public class PortalManager : MonoBehaviour
         
         }
     }
-
-    void OnTriggerEnter2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
-        {
-         
-        }
-    }
-
-    void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.CompareTag("Player"))
-        {
-            
-        }
-    }
-    
 }

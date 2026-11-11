@@ -98,7 +98,6 @@ public class GameEndManager : MonoBehaviour
         if (effectActive) return;
         effectActive = true;
 
-        Debug.Log("GameEndManager: Spielende-Effekt gestartet!");
 
         if (GameManager.instance != null)
         {
@@ -146,7 +145,6 @@ public class GameEndManager : MonoBehaviour
 
         mainCamera.transform.position = camTargetPos;
         mainCamera.orthographicSize = camTargetSize;
-        Debug.Log("GameEndManager: Kamera-Effekt abgeschlossen.");
 
         Time.timeScale = 0f;
         yield return StartCoroutine(FadeToBlackAndShowEndScreen());
@@ -172,12 +170,10 @@ public class GameEndManager : MonoBehaviour
             yield return null;
         }
         endScreenCanvasGroup.alpha = 1;
-        Debug.Log("GameEndManager: Schwarzblende abgeschlossen.");
 
         if (endScreenTextOverlay != null)
         {
             endScreenTextOverlay.gameObject.SetActive(true);
-            Debug.Log("GameEndManager: End-Text aktiviert.");
         }
         
         if (quitButtonOverlay != null)
@@ -185,16 +181,11 @@ public class GameEndManager : MonoBehaviour
             quitButtonOverlay.gameObject.SetActive(true);
             endScreenCanvasGroup.blocksRaycasts = true;
             endScreenCanvasGroup.interactable = true;
-            Debug.Log("GameEndManager: Quit Button aktiviert.");
         }
     }
     
     public void QuitGame()
     {
-        Debug.Log("GameEndManager: Quit Game button clicked. Application will exit.");
-        Application.Quit();
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #endif
+        GameUtils.QuitGame();
     }
 }

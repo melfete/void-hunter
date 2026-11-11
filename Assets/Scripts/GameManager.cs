@@ -180,10 +180,6 @@ public class GameManager : MonoBehaviour
     public void QuitGame()
     {
         PauseAllAudio();
-        #if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-        #else
-            Application.Quit();
-        #endif
+        GameUtils.QuitGame();
     }
 }
