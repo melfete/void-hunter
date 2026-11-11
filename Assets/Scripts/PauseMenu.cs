@@ -99,10 +99,7 @@ public class PauseMenu : MonoBehaviour
 
     public void Resume()
     {
-        if (pauseMenuUI != null)
-        {
-            pauseMenuUI.SetActive(false);
-        }
+        UIPanelFade.Hide(pauseMenuUI);
 
         Time.timeScale = 1f;
         isPaused = false;
@@ -115,10 +112,7 @@ public class PauseMenu : MonoBehaviour
 
     void Pause()
     {
-        if (pauseMenuUI != null)
-        {
-            pauseMenuUI.SetActive(true);
-        }
+        UIPanelFade.Show(pauseMenuUI);
 
         Time.timeScale = 0f;
         isPaused = true;
@@ -149,7 +143,7 @@ public class PauseMenu : MonoBehaviour
             GameManager.instance.ResumeAllAudio();
         }
 
-        SceneManager.LoadScene(mainMenuSceneName);
+        SceneFader.LoadScene(mainMenuSceneName);
     }
 
     public void QuitGame()

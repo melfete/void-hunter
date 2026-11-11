@@ -174,7 +174,7 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 1f;
         ResumeAllAudio();
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneFader.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void QuitGame()
