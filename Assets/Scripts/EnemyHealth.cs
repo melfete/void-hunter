@@ -24,6 +24,13 @@ public class EnemyHealth : MonoBehaviour
     public AudioClip hitSound;
     private AudioSource audioSource;
 
+    // Kurzes Aufblinken bei Treffern (es gibt keine eigenen Treffer-Sprites fuer Gegner).
+    public Color hitFlashColor = new Color(1f, 0.35f, 0.35f, 1f);
+    public float hitFlashDuration = 0.12f;
+    private SpriteRenderer spriteRenderer;
+    private Color originalColor;
+    private Coroutine flashRoutine;
+
 
     void Start()
     {
@@ -32,6 +39,9 @@ public class EnemyHealth : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         // Liefert die im Prefab angelegte AudioSource; die zur Laufzeit ergaenzte Schleifen-Quelle kommt erst danach.
         audioSource = GetComponent<AudioSource>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null) spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        if (spriteRenderer != null) originalColor = spriteRenderer.color;
 
         if (enemyController == null)
         {
@@ -77,8 +87,27 @@ public class EnemyHealth : MonoBehaviour
 
         if (currentHealth <= 0)
         {
-            Die(); 
+            Die();
         }
+        else
+        {
+            FlashOnHit();
+        }
+    }
+
+    private void FlashOnHit()
+    {
+        if (spriteRenderer == null) return;
+        if (flashRoutine != null) StopCoroutine(flashRoutine);
+        flashRoutine = StartCoroutine(HitFlash());
+    }
+
+    private IEnumerator HitFlash()
+    {
+        spriteRenderer.color = hitFlashColor;
+        yield return new WaitForSeconds(hitFlashDuration);
+        spriteRenderer.color = originalColor;
+        flashRoutine = null;
     }
 
     void UpdateHealthBar()
@@ -153,6 +182,14 @@ public class EnemyHealth : MonoBehaviour
         {
             Destroy(instantiatedHealthBar);
         }
+
+        // Blinken abbrechen, damit das Ausblenden mit der Originalfarbe startet.
+        if (flashRoutine != null)
+        {
+            StopCoroutine(flashRoutine);
+            flashRoutine = null;
+        }
+        if (spriteRenderer != null) spriteRenderer.color = originalColor;
         
         if (enemyController != null)
         {
