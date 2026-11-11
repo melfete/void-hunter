@@ -104,6 +104,14 @@ public class GameEndManager : MonoBehaviour
             GameManager.instance.PauseAllAudio();
         }
 
+        // Sonst zieht der CameraController die Kamera jedes Frame zurueck zum Spieler
+        // und die Fahrt zum Portal ruckelt.
+        if (mainCamera != null)
+        {
+            CameraController follow = mainCamera.GetComponent<CameraController>();
+            if (follow != null) follow.enabled = false;
+        }
+
         if (player != null)
         {
             PlayerController pc = player.GetComponent<PlayerController>();
@@ -136,9 +144,12 @@ public class GameEndManager : MonoBehaviour
         {
             timer += Time.unscaledDeltaTime;
             float normalizedTime = timer / effectDuration;
+            // Weich an- und abbremsen statt gleichfoermig.
+            float moveT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(normalizedTime * cameraMoveSpeed));
+            float zoomT = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(normalizedTime * cameraZoomSpeed));
 
-            mainCamera.transform.position = Vector3.Lerp(camStartPos, camTargetPos, normalizedTime * cameraMoveSpeed);
-            mainCamera.orthographicSize = Mathf.Lerp(camStartSize, camTargetSize, normalizedTime * cameraZoomSpeed);
+            mainCamera.transform.position = Vector3.Lerp(camStartPos, camTargetPos, moveT);
+            mainCamera.orthographicSize = Mathf.Lerp(camStartSize, camTargetSize, zoomT);
 
             yield return null;
         }
