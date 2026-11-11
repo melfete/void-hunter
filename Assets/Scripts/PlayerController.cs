@@ -11,6 +11,7 @@ public class PlayerController : MonoBehaviour
     private static readonly int AnimHealingLeft = Animator.StringToHash("HealingLeft");
     private static readonly int AnimHealingRight = Animator.StringToHash("HealingRight");
     private static readonly int AnimIsAttacking = Animator.StringToHash("IsAttacking");
+    private static readonly int AnimIsAttacking2 = Animator.StringToHash("IsAttacking2");
     private static readonly int AnimIsJumping = Animator.StringToHash("IsJumping");
     private static readonly int AnimIsMovingUp = Animator.StringToHash("IsMovingUp");
     private static readonly int AnimIsRunning = Animator.StringToHash("IsRunning");
@@ -34,7 +35,17 @@ public class PlayerController : MonoBehaviour
     public float wallJumpTime = 0.2f;
 
     public float attackCooldown = 0.5f;
+    public float attackDuration = 0.3f;
     private float nextAttackTime = 0f;
+
+    // Combo: erneuter Angriff waehrend/kurz nach Angriff 1 loest sofort Angriff 2 aus.
+    public int comboAttackDamage = 30;
+    public float comboAttackDuration = 0.35f;
+    public float comboWindow = 0.4f;          // Zeit nach Ende von Angriff 1, in der die Combo noch zaehlt
+    private int currentAttack;                // 1 = Angriff 1, 2 = Combo-Angriff
+    private bool comboReady;
+    private bool comboQueued;                 // Klick waehrend Angriff 1 wird gemerkt
+    private float comboWindowEnd;
 
     public GameObject projectilePrefab;
     public Transform firePoint;
@@ -228,7 +239,8 @@ public class PlayerController : MonoBehaviour
         // Sprung-Animation nur, wenn keine andere Aktion laeuft - sonst wechselt der Animator
         // jedes Frame zwischen "Jump" und z.B. "Attack" (beide ueber Any State erreichbar).
         animator.SetBool(AnimIsJumping, !isGrounded && !isAttacking && !isDashing && !isHealing && !isMovingUp);
-        animator.SetBool(AnimIsAttacking, isAttacking);
+        animator.SetBool(AnimIsAttacking, isAttacking && currentAttack == 1);
+        animator.SetBool(AnimIsAttacking2, isAttacking && currentAttack == 2);
         animator.SetBool(AnimIsMovingUp, isMovingUp);
 
         if (!isWallJumping && Input.GetButtonDown("Jump") && isGrounded && !isDashing && !isAttacking)
@@ -246,10 +258,26 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (Time.time >= nextAttackTime && Input.GetButtonDown("Fire1") && !isDashing && !isAttacking)
+        bool comboOpen = comboReady && Time.time <= comboWindowEnd;
+        if (Input.GetButtonDown("Fire1") && !isDashing && !isHealing)
         {
-            Attack();
-            nextAttackTime = Time.time + attackCooldown;
+            if (isAttacking && currentAttack == 1 && comboReady)
+            {
+                comboQueued = true; // startet direkt nach Angriff 1
+            }
+            else if (!isAttacking && comboOpen)
+            {
+                Attack(2);
+            }
+            else if (!isAttacking && Time.time >= nextAttackTime)
+            {
+                Attack(1);
+            }
+        }
+        if (comboQueued && !isAttacking)
+        {
+            comboQueued = false;
+            if (comboOpen) Attack(2);
         }
 
         if (Time.time >= nextProjectileTime && Input.GetButtonDown("Fire2") && !isDashing && !isAttacking)
@@ -267,7 +295,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.LeftShift) && Time.time >= nextDashTime && !isDashing && !isWallSliding && !isAttacking)
+        if (Input.GetKeyDown(KeyCode.LeftShift) && Time.time >= nextDashTime && !isDashing && !isWallSliding && !isAttacking && !isHealing)
         {
             Dash();
             nextDashTime = Time.time + dashCooldown;
@@ -335,11 +363,22 @@ public class PlayerController : MonoBehaviour
         isWallJumping = false;
     }
 
-    void Attack()
+    // step 1 = normaler Angriff, step 2 = Combo-Angriff (mehr Schaden).
+    void Attack(int step)
     {
         isAttacking = true;
-        animator.SetBool(AnimIsAttacking, true);
-        StartCoroutine(ResetAttackAnimation());
+        currentAttack = step;
+        float duration = step == 2 ? comboAttackDuration : attackDuration;
+
+        animator.SetBool(AnimIsAttacking, step == 1);
+        animator.SetBool(AnimIsAttacking2, step == 2);
+        StartCoroutine(ResetAttackAnimation(duration));
+
+        // Nach Angriff 1 ist die Combo offen, nach Angriff 2 gilt der normale Cooldown.
+        comboReady = step == 1;
+        comboQueued = false;
+        comboWindowEnd = Time.time + duration + comboWindow;
+        nextAttackTime = Time.time + attackCooldown;
 
         if (attackPoint == null)
         {
@@ -347,6 +386,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        int damage = step == 2 ? comboAttackDamage : attackDamage;
         Collider2D[] hitEnemies = Physics2D.OverlapCircleAll(attackPoint.position, attackRange, enemyLayers);
 
         foreach (Collider2D enemy in hitEnemies)
@@ -354,18 +394,19 @@ public class PlayerController : MonoBehaviour
             EnemyHealth enemyHealth = enemy.GetComponent<EnemyHealth>();
             if (enemyHealth != null)
             {
-                enemyHealth.TakeDamage(attackDamage); 
+                enemyHealth.TakeDamage(damage);
                 enemyHealth.TakeKnockback(transform, playerAttackKnockbackForce);
             }
         }
         PlaySound(attackSound);
     }
 
-    private IEnumerator ResetAttackAnimation()
+    private IEnumerator ResetAttackAnimation(float duration)
     {
-        yield return new WaitForSeconds(0.3f); 
+        yield return new WaitForSeconds(duration);
         isAttacking = false;
         animator.SetBool(AnimIsAttacking, false);
+        animator.SetBool(AnimIsAttacking2, false);
     }
 
     void FireProjectile()
