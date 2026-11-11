@@ -26,7 +26,6 @@ public class PauseMenu : MonoBehaviour
         if (resumeButton != null)
         {
             resumeButton.onClick.AddListener(Resume);
-            Debug.Log("PauseMenu: Listener fuer Resume Button hinzugefuegt.");
         }
         else
         {
@@ -36,7 +35,6 @@ public class PauseMenu : MonoBehaviour
         if (quitButton != null)
         {
             quitButton.onClick.AddListener(QuitGame);
-            Debug.Log("PauseMenu: Listener fuer Quit Game Button hinzugefuegt.");
         }
         else
         {
@@ -46,7 +44,6 @@ public class PauseMenu : MonoBehaviour
         if (mainMenuButton != null)
         {
             mainMenuButton.onClick.AddListener(LoadMainMenuScene);
-            Debug.Log("PauseMenu: Listener fuer Main Menu Button hinzugefuegt.");
         }
         else
         {
@@ -57,7 +54,6 @@ public class PauseMenu : MonoBehaviour
         if (volumeSlider != null)
         {
             volumeSlider.onValueChanged.AddListener(SetVolume);
-            Debug.Log("PauseMenu: Listener fuer Volume Slider hinzugefuegt.");
         }
         else
         {
@@ -74,14 +70,10 @@ public class PauseMenu : MonoBehaviour
         }
 
         Time.timeScale = 1f;
-        Debug.Log("PauseMenu: Start-Methode aufgerufen. isPaused=" + isPaused + ", pauseMenuUI.activeSelf=" +
-                  (pauseMenuUI != null ? pauseMenuUI.activeSelf.ToString() : "NULL"));
-        Debug.Log("PauseMenu: Time.timeScale zu Beginn von Start: " + Time.timeScale);
 
         if (volumeSlider != null)
         {
             volumeSlider.value = AudioListener.volume;
-            Debug.Log("PauseMenu: Volume Slider initialisiert mit AudioListener.volume: " + AudioListener.volume);
         }
     }
 
@@ -114,7 +106,6 @@ public class PauseMenu : MonoBehaviour
 
         Time.timeScale = 1f;
         isPaused = false;
-        Debug.Log("PauseMenu: Spiel fortgesetzt. Time.timeScale: " + Time.timeScale);
 
         if (GameManager.instance != null)
         {
@@ -131,7 +122,6 @@ public class PauseMenu : MonoBehaviour
 
         Time.timeScale = 0f;
         isPaused = true;
-        Debug.Log("PauseMenu: Spiel pausiert. Time.timeScale: " + Time.timeScale);
 
         if (GameManager.instance != null)
         {
@@ -141,19 +131,16 @@ public class PauseMenu : MonoBehaviour
         if (volumeSlider != null)
         {
             volumeSlider.value = AudioListener.volume;
-            Debug.Log("PauseMenu: Volume Slider aktualisiert beim Oeffnen des Menues: " + AudioListener.volume);
         }
     }
 
     public void SetVolume(float volume)
     {
         AudioListener.volume = volume;
-        Debug.Log("PauseMenu: Lautstaerke gesetzt auf: " + volume);
     }
 
     public void LoadMainMenuScene()
     {
-        Debug.Log("PauseMenu: Lade Hauptmenue Szene: " + mainMenuSceneName);
         Time.timeScale = 1f;
         isPaused = false;
 
@@ -167,10 +154,6 @@ public class PauseMenu : MonoBehaviour
 
     public void QuitGame()
     {
-        Debug.Log("PauseMenu: Spiel beendet.");
-        Application.Quit();
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#endif
+        GameUtils.QuitGame();
     }
 }

@@ -11,6 +11,7 @@ public class EnemyHealth : MonoBehaviour
     public float knockbackDuration = 0.2f;
 
     private EnemyController enemyController;
+    private Rigidbody2D rb;
 
     public static event Action<GameObject> OnSpecificEnemyDied;
     public bool isBossEnemy = false;
@@ -28,6 +29,8 @@ public class EnemyHealth : MonoBehaviour
     {
         currentHealth = maxHealth;
         enemyController = GetComponent<EnemyController>();
+        rb = GetComponent<Rigidbody2D>();
+        // Liefert die im Prefab angelegte AudioSource; die zur Laufzeit ergaenzte Schleifen-Quelle kommt erst danach.
         audioSource = GetComponent<AudioSource>();
 
         if (enemyController == null)
@@ -104,7 +107,6 @@ public class EnemyHealth : MonoBehaviour
     {
         if (enemyController != null && enemyController.IsDead) return;
 
-        Rigidbody2D rb = GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             Vector2 knockbackDirection = (transform.position - attackerTransform.position).normalized;
