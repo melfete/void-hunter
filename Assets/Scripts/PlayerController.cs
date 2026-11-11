@@ -225,14 +225,15 @@ public class PlayerController : MonoBehaviour
         }
 
         animator.SetBool(AnimIsRunning, Mathf.Abs(moveInput) > 0.01f && !isDashing && !isAttacking && !isMovingUp);
-        animator.SetBool(AnimIsJumping, !isGrounded);
+        // Sprung-Animation nur, wenn keine andere Aktion laeuft - sonst wechselt der Animator
+        // jedes Frame zwischen "Jump" und z.B. "Attack" (beide ueber Any State erreichbar).
+        animator.SetBool(AnimIsJumping, !isGrounded && !isAttacking && !isDashing && !isHealing && !isMovingUp);
         animator.SetBool(AnimIsAttacking, isAttacking);
         animator.SetBool(AnimIsMovingUp, isMovingUp);
 
         if (!isWallJumping && Input.GetButtonDown("Jump") && isGrounded && !isDashing && !isAttacking)
         {
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
-            animator.SetBool(AnimIsJumping, true);
             PlaySound(jumpSound);
         }
 
