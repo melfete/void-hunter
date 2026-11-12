@@ -1,21 +1,17 @@
 # Void Hunter
 
-A 2D action platformer made with **Unity 6** and **C#**. Fight your way through a dark world full of shadow creatures, master precise platforming and reach the mysterious portal at the end of the level.
-
-<!-- TODO: Gameplay-GIF hier einfuegen, z. B. mit ScreenToGif aufnehmen:
-![Gameplay](Docs/gameplay.gif)
--->
+A 2D action platformer made with Unity 6 and C#. You fight your way through a dark world full of shadow creatures until you reach the portal at the end of the level.
 
 ## Features
 
-- **Fluid movement:** running, jumping, wall sliding, wall jumps and a dash
-- **Two attack types:** a fast melee attack and a ranged projectile attack
-- **Healing** with a cooldown
-- **Three enemy types with their own AI:**
-  - *Flying Angel*: hovers through the air and attacks the player
-  - *Burning Ghoul*: ground enemy that chases the player
-  - *Wizard*: ranged enemy that casts fireballs
-- **Portal finale:** the exit portal appears once the key enemies are defeated, followed by a camera zoom and fade-out ending sequence
+- Running, jumping, wall sliding, wall jumps and a dash
+- A fast melee attack and a ranged projectile attack
+- Healing with a cooldown
+- Three enemy types, each with its own AI:
+  - Flying Angel: flies through the air and attacks the player
+  - Burning Ghoul: chases the player on the ground
+  - Wizard: casts fireballs from a distance
+- The exit portal appears once the key enemies are defeated. The game ends with a camera zoom and a fade-out.
 - Main menu, pause menu with volume control, game over screen with restart
 
 ## Screenshots
@@ -41,7 +37,7 @@ A 2D action platformer made with **Unity 6** and **C#**. Fight your way through 
 
 ## Play
 
-Download the latest Windows build from the [Releases](../../releases) page, unzip it and start `Void Hunter.exe`.
+Download the Windows build from the [Releases](../../releases) page, unzip it and start `Void Hunter.exe`. A full run takes less than two minutes.
 
 ## Code overview
 
@@ -62,19 +58,19 @@ All gameplay code is in [`Assets/Scripts`](Assets/Scripts):
 
 ## Tech
 
-- Unity 6 (6000.1.1f1), Universal Render Pipeline 2D
+- Unity 6, Universal Render Pipeline 2D
 - C#, Rigidbody2D physics, Tilemaps, Animator state machines
-- Physics movement in `FixedUpdate`, input in `Update`
-- Static C# events to decouple enemy deaths from the portal logic
+- Physics movement runs in `FixedUpdate`, input is read in `Update`
+- Enemy deaths are sent as static C# events, so the portal logic does not depend on the enemy scripts
 
 ## Open in Unity
 
-1. Clone the repository
-2. Open the folder with **Unity 6000.1.1f1** (or a newer Unity 6 version) via Unity Hub
-3. Open `Assets/Scenes/MainMenu.unity` and press Play
+1. Clone the repository.
+2. Open the folder in Unity Hub with a Unity 6 version.
+3. Open `Assets/Scenes/MainMenu.unity` and press Play.
 
 ## Credits
 
-Graphics and sound effects are taken from free asset packs. All rights belong to their respective creators.
+Graphics and sound effects come from free asset packs. All rights belong to their creators.
 
-Game design, programming and level design by **Saltuk Kalender**.
+Game design, programming and level design by Saltuk Kalender.
