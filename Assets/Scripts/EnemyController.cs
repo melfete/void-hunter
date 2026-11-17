@@ -317,8 +317,7 @@ public class EnemyController : MonoBehaviour
 
         if (isFloatingEnemy)
         {
-            // Direkt auf den Spieler zufliegen. Frueher war die Hoehe an das Auf-und-ab-Schweben
-            // gebunden - fliegende Gegner konnten dem Spieler so nicht folgen.
+            // Direkt auf den Spieler zufliegen, unabhaengig vom Auf-und-ab-Schweben.
             _rb.linearVelocity = directionToPlayer * moveSpeed;
         }
         else
@@ -356,9 +355,8 @@ public class EnemyController : MonoBehaviour
         // Im Stand ergibt sich die Blickrichtung nicht aus der Bewegung - also zum Spieler drehen.
         FacePlayer();
 
-        // Angriff nur starten, wenn der Cooldown abgelaufen ist. Frueher wurde isAttackingPlayer in jedem
-        // Physik-Schritt gesetzt - die Angriffs-Animation lief dann endlos und der Wizard schoss bei jedem
-        // Durchlauf (Animation-Event), unabhaengig vom Cooldown. Dazwischen wartet der Gegner.
+        // Angriff nur nach Ablauf des Cooldowns starten, sonst laeuft die Angriffs-Animation
+        // (und damit der Schuss per Animation-Event) endlos. Dazwischen wartet der Gegner.
         if (Time.time >= nextAttackTime)
         {
             isAttackingPlayer = true;

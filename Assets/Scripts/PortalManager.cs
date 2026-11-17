@@ -15,7 +15,7 @@ public class PortalManager : MonoBehaviour
     [Header("Portal betreten")]
     public float portalTriggerRadius = 1f;
     public int portalSortingOrder = 20;       // vor Hintergrund und Figuren zeichnen
-    public float pullDuration = 1.2f;         // Dauer des Hineinziehens
+    public float pullDuration = 1.2f;
     public float pullSpinDegrees = 540f;      // Drehung waehrend des Hineinziehens
 
     private PlayerController playerController;
@@ -87,11 +87,11 @@ public class PortalManager : MonoBehaviour
         yield return new WaitForSeconds(portalActivationDelay);
 
         Vector3 pos = portalSpawnLocation != null ? portalSpawnLocation.position : portalObject.transform.position;
-        pos.z = 0f; // Portal lag bei z = 20 und damit eventuell hinter dem Hintergrund
+        pos.z = 0f; // sonst liegt das Portal evtl. hinter dem Hintergrund
         portalObject.transform.position = pos;
         portalObject.SetActive(true);
 
-        // Der Effekt-Renderer war in der Szene deaktiviert - sichtbar machen und nach vorne sortieren.
+        // Effekt-Renderer einschalten und vor Hintergrund und Figuren sortieren.
         Renderer portalRenderer = portalObject.GetComponent<Renderer>();
         if (portalRenderer != null)
         {
